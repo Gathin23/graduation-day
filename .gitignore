@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+retry_thumbs.py
+index.old.html
+bento-grid-concept.html
+stories-feed-concept.html
+immersive-concept.html
+final-design.html
