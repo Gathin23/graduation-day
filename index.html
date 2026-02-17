@@ -6836,8 +6836,46 @@ grid.addEventListener('click', (e) => {
         return;
     }
     const tile = e.target.closest('.photo-tile');
-    if (tile) openLightbox(parseInt(tile.dataset.index, 10));
+    if (tile) {
+        // On mobile, tap toggles selection; long-press or lightbox via check
+        if (window.innerWidth <= 768) {
+            const idx = parseInt(tile.dataset.index, 10);
+            const photo = filteredPhotos[idx];
+            if (!photo) return;
+            if (selectedPhotos.has(photo.id)) {
+                selectedPhotos.delete(photo.id);
+            } else {
+                if (selectedPhotos.size >= MAX_SELECT) {
+                    showMaxSelectToast();
+                    return;
+                }
+                selectedPhotos.add(photo.id);
+            }
+            updateSelectionUI();
+        } else {
+            openLightbox(parseInt(tile.dataset.index, 10));
+        }
+    }
 });
+
+// Long-press on mobile to open lightbox
+let longPressTimer = null;
+let longPressTriggered = false;
+grid.addEventListener('touchstart', (e) => {
+    const tile = e.target.closest('.photo-tile');
+    if (!tile) return;
+    longPressTriggered = false;
+    longPressTimer = setTimeout(() => {
+        longPressTriggered = true;
+        openLightbox(parseInt(tile.dataset.index, 10));
+    }, 500);
+}, { passive: true });
+grid.addEventListener('touchmove', () => { clearTimeout(longPressTimer); }, { passive: true });
+grid.addEventListener('touchend', () => { clearTimeout(longPressTimer); }, { passive: true });
+// Prevent tap-select if long-press opened lightbox
+grid.addEventListener('click', (e) => {
+    if (longPressTriggered) { e.stopImmediatePropagation(); longPressTriggered = false; }
+}, true);
 
 // ============================================================
 // LIGHTBOX
