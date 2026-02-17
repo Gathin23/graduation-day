@@ -352,10 +352,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
       <input type="text" placeholder="Search by filename..." id="searchInput" autocomplete="off">
       <button class="search-clear" id="searchClear" style="display:none">&times;</button>
     </div>
-    <button class="header-btn" id="selectionCountBtn" title="Selected photos">
-      <span>&#8595;</span>
-      <span class="badge" id="headerBadge" style="display:none">0</span>
-    </button>
   </div>
 </header>
 
@@ -6637,8 +6633,7 @@ function updateSelectionUI() {
     const count = selectedPhotos.size;
     dlBarCount.textContent = count + '/' + MAX_SELECT + ' photo' + (count !== 1 ? 's' : '') + ' selected';
     downloadBar.classList.toggle('visible', count > 0);
-    headerBadge.style.display = count > 0 ? 'flex' : 'none';
-    headerBadge.textContent = count > 99 ? '99+' : count;
+    if (headerBadge) { headerBadge.style.display = count > 0 ? 'flex' : 'none'; headerBadge.textContent = count > 99 ? '99+' : count; }
     downloadSelBtn.innerHTML = count <= 1 ? '&#8595; Download Image' : '&#8595; Download ZIP';
     grid.querySelectorAll('.tile-check').forEach(el => {
         const id = el.dataset.id;
