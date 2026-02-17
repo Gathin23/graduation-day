@@ -6629,6 +6629,21 @@ function getFileRange(filename) {
 }
 
 let lastRange = '';
+function scrollToPhotoIndex(targetIdx) {
+    const grid = document.getElementById('photoGrid');
+    // Render batches until target tile exists
+    while (displayedCount <= targetIdx && displayedCount < filteredPhotos.length) {
+        renderBatch();
+    }
+    const tile = grid.querySelector('.photo-tile[data-index="' + targetIdx + '"]');
+    if (tile) {
+        // Use instant scroll first to position, then let browser paint
+        const headerH = document.querySelector('.header')?.offsetHeight || 60;
+        const y = tile.getBoundingClientRect().top + window.scrollY - headerH - 12;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+}
+
 function renderBatch() {
     const start = displayedCount;
     const end = Math.min(start + BATCH, filteredPhotos.length);
@@ -7552,34 +7567,41 @@ function animateCounter(el, target) {
 
     function buildRangeList() {
         // Build range → count map and first index for each range
+        // Use camera+range as key to avoid collisions across cameras
         const ranges = [];
         const seen = {};
         for (let i = 0; i < filteredPhotos.length; i++) {
-            const r = getFileRange(filteredPhotos[i].filename);
-            if (r && !seen[r]) {
-                seen[r] = { range: r, count: 0, firstIndex: i };
-                ranges.push(seen[r]);
+            const p = filteredPhotos[i];
+            const r = getFileRange(p.filename);
+            if (!r) continue;
+            const key = p.category + ':' + r;
+            if (!seen[key]) {
+                const label = r;
+                seen[key] = { range: label, count: 0, firstIndex: i };
+                ranges.push(seen[key]);
             }
-            if (r && seen[r]) seen[r].count++;
+            seen[key].count++;
         }
 
         // Find current visible range
         const grid = document.getElementById('photoGrid');
         const tiles = grid.querySelectorAll('.photo-tile');
-        let currentRange = null;
+        let currentKey = null;
         for (let i = 0; i < tiles.length; i++) {
             const rect = tiles[i].getBoundingClientRect();
             if (rect.bottom > 60 && rect.top < window.innerHeight * 0.5) {
                 const idx = parseInt(tiles[i].dataset.index, 10);
                 if (!isNaN(idx) && filteredPhotos[idx]) {
-                    currentRange = getFileRange(filteredPhotos[idx].filename);
-                    if (currentRange) break;
+                    const p = filteredPhotos[idx];
+                    const r = getFileRange(p.filename);
+                    if (r) { currentKey = p.category + ':' + r; break; }
                 }
             }
         }
+        const currentLabel = currentKey && seen[currentKey] ? seen[currentKey].range : null;
 
         list.innerHTML = ranges.map(r =>
-            '<button class="rn-item' + (r.range === currentRange ? ' current' : '') + '" data-first="' + r.firstIndex + '">' +
+            '<button class="rn-item' + (r.range === currentLabel ? ' current' : '') + '" data-first="' + r.firstIndex + '">' +
             '<span>' + r.range + '</span>' +
             '<span class="rn-count">' + r.count + '</span>' +
             '</button>'
@@ -7593,21 +7615,7 @@ function animateCounter(el, target) {
     list.addEventListener('click', (e) => {
         const item = e.target.closest('.rn-item');
         if (!item) return;
-        const firstIdx = parseInt(item.dataset.first, 10);
-        // Find the tile with this index and scroll to it
-        const grid = document.getElementById('photoGrid');
-        const tile = grid.querySelector('.photo-tile[data-index="' + firstIdx + '"]');
-        if (tile) {
-            tile.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Offset for sticky header
-            setTimeout(() => window.scrollBy(0, -80), 400);
-        } else {
-            // Tile might not be rendered yet — load more batches
-            // Scroll to approximate position
-            const totalHeight = grid.scrollHeight;
-            const ratio = firstIdx / filteredPhotos.length;
-            window.scrollTo({ top: grid.offsetTop + totalHeight * ratio, behavior: 'smooth' });
-        }
+        scrollToPhotoIndex(parseInt(item.dataset.first, 10));
         panel.classList.remove('open');
         fab.classList.remove('active');
     });
@@ -7636,30 +7644,36 @@ function animateCounter(el, target) {
         const ranges = [];
         const seen = {};
         for (let i = 0; i < filteredPhotos.length; i++) {
-            const r = getFileRange(filteredPhotos[i].filename);
-            if (r && !seen[r]) {
-                seen[r] = { range: r, count: 0, firstIndex: i };
-                ranges.push(seen[r]);
+            const p = filteredPhotos[i];
+            const r = getFileRange(p.filename);
+            if (!r) continue;
+            const key = p.category + ':' + r;
+            if (!seen[key]) {
+                const label = r;
+                seen[key] = { range: label, count: 0, firstIndex: i };
+                ranges.push(seen[key]);
             }
-            if (r && seen[r]) seen[r].count++;
+            seen[key].count++;
         }
 
         const grid = document.getElementById('photoGrid');
         const tiles = grid.querySelectorAll('.photo-tile');
-        let currentRange = null;
+        let currentKey = null;
         for (let i = 0; i < tiles.length; i++) {
             const rect = tiles[i].getBoundingClientRect();
             if (rect.bottom > 60 && rect.top < window.innerHeight * 0.5) {
                 const idx = parseInt(tiles[i].dataset.index, 10);
                 if (!isNaN(idx) && filteredPhotos[idx]) {
-                    currentRange = getFileRange(filteredPhotos[idx].filename);
-                    if (currentRange) break;
+                    const p = filteredPhotos[idx];
+                    const r = getFileRange(p.filename);
+                    if (r) { currentKey = p.category + ':' + r; break; }
                 }
             }
         }
+        const currentLabel = currentKey && seen[currentKey] ? seen[currentKey].range : null;
 
         rangeDropdown.innerHTML = ranges.map(r =>
-            '<button class="cam-option' + (r.range === currentRange ? ' active' : '') + '" data-first="' + r.firstIndex + '">' +
+            '<button class="cam-option' + (r.range === currentLabel ? ' active' : '') + '" data-first="' + r.firstIndex + '">' +
             r.range + ' <span style="opacity:0.5;font-weight:500">(' + r.count + ')</span></button>'
         ).join('');
 
@@ -7670,17 +7684,7 @@ function animateCounter(el, target) {
     rangeDropdown.addEventListener('click', (e) => {
         const item = e.target.closest('.cam-option');
         if (!item) return;
-        const firstIdx = parseInt(item.dataset.first, 10);
-        const grid = document.getElementById('photoGrid');
-        const tile = grid.querySelector('.photo-tile[data-index="' + firstIdx + '"]');
-        if (tile) {
-            tile.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            setTimeout(() => window.scrollBy(0, -80), 400);
-        } else {
-            const totalHeight = grid.scrollHeight;
-            const ratio = firstIdx / filteredPhotos.length;
-            window.scrollTo({ top: grid.offsetTop + totalHeight * ratio, behavior: 'smooth' });
-        }
+        scrollToPhotoIndex(parseInt(item.dataset.first, 10));
         rangeFilter.classList.remove('open');
     });
 })();
