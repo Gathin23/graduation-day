@@ -109,7 +109,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .range-pill.visible{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Range Navigator FAB */
-.range-nav-fab{position:fixed;bottom:24px;right:28px;width:46px;height:46px;border-radius:12px;background:var(--lavender);border:2.5px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:91;transition:all 0.15s}
+.range-nav-fab{position:fixed;bottom:24px;right:28px;width:46px;height:46px;border-radius:12px;background:var(--lavender);border:2.5px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:91;transition:all 0.2s}
 .range-nav-fab:hover{box-shadow:var(--shadow-hover);transform:translate(-1px,-1px)}
 .range-nav-fab:active{box-shadow:1px 1px 0px var(--border);transform:translate(2px,2px)}
 .range-nav-fab.active{background:var(--lime)}
@@ -160,6 +160,18 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .dl-btn.secondary:hover{background:#f0f0f0;box-shadow:var(--shadow-hover);transform:translate(-1px,-1px)}
 .dl-btn.primary{background:var(--accent);color:white;display:flex;align-items:center;gap:8px}
 .dl-btn.primary:hover{box-shadow:var(--shadow-hover);transform:translate(-1px,-1px)}
+.dl-btn.share{background:var(--sky);color:var(--text);display:flex;align-items:center;gap:6px}
+.dl-btn.share:hover{box-shadow:var(--shadow-hover);transform:translate(-1px,-1px)}
+
+/* Share Toast */
+.share-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);z-index:200;padding:14px 24px;background:var(--text);color:#fff;font-size:13px;font-weight:700;border-radius:12px;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none}
+.share-toast.visible{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* Shared View Banner */
+.shared-banner{display:none;align-items:center;justify-content:center;gap:12px;padding:10px 24px;background:var(--sky);border-bottom:2.5px solid var(--border);font-size:13px;font-weight:700;text-align:center}
+.shared-banner.visible{display:flex}
+.shared-banner button{padding:6px 14px;border-radius:8px;border:2px solid var(--border);background:var(--surface);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;box-shadow:2px 2px 0px var(--border)}
+.shared-banner button:active{box-shadow:1px 1px 0px var(--border);transform:translate(1px,1px)}
 
 /* Download Progress Modal */
 .zip-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:lbIn 0.2s ease}
@@ -299,6 +311,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .dl-bar-left{width:100%;justify-content:space-between}
   .dl-bar-right{width:100%;gap:8px}
   .dl-btn{flex:1;text-align:center;padding:10px 0;font-size:12px;justify-content:center}
+  .shared-banner{font-size:12px;padding:8px 16px;gap:8px}
+  .shared-banner button{font-size:11px;padding:5px 10px}
 
   /* Bottom Sheet Zip Modal */
   .zip-modal-overlay{align-items:flex-end!important}
@@ -355,6 +369,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 </header>
 
+<!-- Shared View Banner -->
+<div class="shared-banner" id="sharedBanner">
+  <span id="sharedBannerText">Viewing 0 shared photos</span>
+  <button id="sharedBannerClear">View all photos</button>
+</div>
+
+<!-- Share Toast -->
+<div class="share-toast" id="shareToast">Link copied!</div>
+
 <!-- Mobile Search Overlay -->
 <div class="mobile-search-overlay mobile-only" id="mobileSearchOverlay">
   <button class="mobile-search-back" id="mobileSearchBack">&#8249;</button>
@@ -407,6 +430,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
   <div class="dl-bar-right">
     <button class="dl-btn secondary" id="clearSelBtn">Clear</button>
+    <button class="dl-btn share" id="shareSelBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</button>
     <button class="dl-btn primary" id="downloadSelBtn">&#8595; Download ZIP</button>
   </div>
 </div>
@@ -6462,6 +6486,10 @@ let selectMode = false;
 let lightboxIndex = -1;
 let searchQuery = '';
 let zipAbort = null;
+let sharedPhotoIds = null; // Set of photo IDs when viewing shared link
+
+const CAM_SHORT = { cam1: '1', cam2: '2', cam3: '3', drone: 'd' };
+const CAM_LONG = { '1': 'cam1', '2': 'cam2', '3': 'cam3', 'd': 'drone' };
 
 // Tile pattern for bento variety
 const TILE_PATTERNS = [
@@ -6497,6 +6525,36 @@ const searchInput = document.getElementById('searchInput');
 // INIT
 // ============================================================
 function init() {
+    // Parse shared photo URL params
+    const urlParams = new URLSearchParams(location.search);
+    const pParam = urlParams.get('p');
+    if (pParam) {
+        const ids = new Set();
+        pParam.split(',').forEach(token => {
+            const dash = token.indexOf('-');
+            if (dash === -1) return;
+            const camShort = token.substring(0, dash);
+            const num = token.substring(dash + 1);
+            const camId = CAM_LONG[camShort];
+            if (!camId) return;
+            // Find photo by camera + number in filename
+            const photo = allPhotos.find(p => p.category === camId && p.filename.match(/(\d{4,})/)?.[1] === num);
+            if (photo) ids.add(photo.id);
+        });
+        if (ids.size > 0) {
+            sharedPhotoIds = ids;
+            const banner = document.getElementById('sharedBanner');
+            document.getElementById('sharedBannerText').textContent = 'Viewing ' + ids.size + ' shared photo' + (ids.size !== 1 ? 's' : '');
+            banner.classList.add('visible');
+            document.getElementById('sharedBannerClear').addEventListener('click', () => {
+                sharedPhotoIds = null;
+                banner.classList.remove('visible');
+                history.replaceState(null, '', location.pathname);
+                applyFilter();
+            });
+        }
+    }
+
     // Total count animation
     animateCounter(document.getElementById('totalPhotos'), allPhotos.length);
 
@@ -6523,7 +6581,8 @@ function init() {
 // FILTERING
 // ============================================================
 function applyFilter() {
-    let photos = currentCategory === 'all' ? allPhotos : allPhotos.filter(p => p.category === currentCategory);
+    let photos = sharedPhotoIds ? allPhotos.filter(p => sharedPhotoIds.has(p.id)) : allPhotos;
+    if (currentCategory !== 'all') photos = photos.filter(p => p.category === currentCategory);
     if (searchQuery) {
         photos = photos.filter(p => p.filename.toLowerCase().includes(searchQuery));
     }
@@ -6633,6 +6692,19 @@ function updateSelectionUI() {
     const count = selectedPhotos.size;
     dlBarCount.textContent = count + '/' + MAX_SELECT + ' photo' + (count !== 1 ? 's' : '') + ' selected';
     downloadBar.classList.toggle('visible', count > 0);
+    // Shift floating buttons above download bar
+    const rangeNavFab = document.getElementById('rangeNavFab');
+    const rangeNavPanel = document.getElementById('rangeNavPanel');
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+    if (count > 0) {
+        rangeNavFab.style.bottom = window.innerWidth <= 768 ? '160px' : '82px';
+        rangeNavPanel.style.bottom = window.innerWidth <= 768 ? '212px' : '138px';
+        scrollTopBtn.style.bottom = window.innerWidth <= 768 ? '212px' : '138px';
+    } else {
+        rangeNavFab.style.bottom = '';
+        rangeNavPanel.style.bottom = '';
+        scrollTopBtn.style.bottom = '';
+    }
     if (headerBadge) { headerBadge.style.display = count > 0 ? 'flex' : 'none'; headerBadge.textContent = count > 99 ? '99+' : count; }
     downloadSelBtn.innerHTML = count <= 1 ? '&#8595; Download Image' : '&#8595; Download ZIP';
     grid.querySelectorAll('.tile-check').forEach(el => {
@@ -6673,6 +6745,40 @@ downloadSelBtn.addEventListener('click', () => {
         downloadAsZip();
     }
 });
+
+// Share button
+document.getElementById('shareSelBtn').addEventListener('click', () => {
+    if (selectedPhotos.size === 0) return;
+    const params = [...selectedPhotos].map(id => {
+        const [cam, fname] = id.split(':');
+        const m = fname.match(/(\d{4,})/);
+        const num = m ? m[1] : fname;
+        return (CAM_SHORT[cam] || cam) + '-' + num;
+    }).join(',');
+    const url = location.origin + location.pathname + '?p=' + params;
+
+    if (url.length > 2000) {
+        showShareToast('Too many photos — select fewer to share');
+        return;
+    }
+
+    if (navigator.share && window.innerWidth <= 768) {
+        navigator.share({ title: 'CEG Graduation Day 2026', url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            showShareToast('Link copied!');
+        }).catch(() => {
+            showShareToast('Could not copy link');
+        });
+    }
+});
+
+function showShareToast(msg) {
+    const toast = document.getElementById('shareToast');
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 2000);
+}
 
 // ============================================================
 // EVENTS
