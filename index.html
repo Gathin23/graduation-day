@@ -101,10 +101,26 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .cam-option.active{background:var(--lime);font-weight:800}
 .cam-option:not(:last-child){border-bottom:1.5px solid #eee}
 
-/* Grid Range Divider */
-.grid-range{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:4px 0;height:auto}
-.grid-range span{font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap}
-.grid-range::after{content:'';flex:1;height:1.5px;background:var(--border);opacity:0.15}
+/* Grid Range Divider — hidden, replaced by sticky pill */
+.grid-range{display:none}
+
+/* Sticky Range Pill */
+.range-pill{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-12px);z-index:101;padding:5px 16px;background:var(--surface);border:2.5px solid var(--border);border-radius:999px;box-shadow:var(--shadow);font-size:11px;font-weight:800;color:var(--text);letter-spacing:1px;text-transform:uppercase;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none}
+.range-pill.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Range Navigator FAB */
+.range-nav-fab{position:fixed;bottom:24px;right:28px;width:46px;height:46px;border-radius:12px;background:var(--lavender);border:2.5px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:91;transition:all 0.15s}
+.range-nav-fab:hover{box-shadow:var(--shadow-hover);transform:translate(-1px,-1px)}
+.range-nav-fab:active{box-shadow:1px 1px 0px var(--border);transform:translate(2px,2px)}
+.range-nav-fab.active{background:var(--lime)}
+.range-nav-panel{position:fixed;bottom:80px;right:28px;width:220px;max-height:60vh;overflow-y:auto;background:var(--surface);border:2.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-hover);z-index:91;display:none;overscroll-behavior:contain}
+.range-nav-panel.open{display:block}
+.range-nav-panel .rn-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:10px 12px 6px;border-bottom:1.5px solid #eee}
+.range-nav-panel .rn-list{padding:4px 0}
+.range-nav-panel .rn-item{display:flex;justify-content:space-between;align-items:center;width:100%;padding:8px 12px;border:none;background:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--text);transition:background 0.1s}
+.range-nav-panel .rn-item:hover{background:var(--bg)}
+.range-nav-panel .rn-item.current{background:var(--lime);font-weight:800}
+.range-nav-panel .rn-count{font-size:11px;color:var(--text-muted);font-weight:500}
 
 /* Bento Photo Grid */
 .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:14px;padding:0 32px 140px;max-width:1400px;margin:0 auto}
@@ -171,7 +187,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .zip-batch-hint strong{font-weight:800}
 
 /* Scroll to top */
-.scroll-top{position:fixed;bottom:24px;right:28px;width:46px;height:46px;border-radius:12px;background:var(--surface);border:2.5px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:90;transition:all 0.15s;opacity:0;pointer-events:none}
+.scroll-top{position:fixed;bottom:80px;right:28px;width:46px;height:46px;border-radius:12px;background:var(--surface);border:2.5px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:90;transition:all 0.15s;opacity:0;pointer-events:none}
 .scroll-top.visible{opacity:1;pointer-events:auto}
 .scroll-top:hover{box-shadow:var(--shadow-hover);transform:translate(-1px,-1px)}
 .scroll-top:active{box-shadow:1px 1px 0px var(--border);transform:translate(2px,2px)}
@@ -201,6 +217,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 @keyframes creditEntrance{0%{transform:translateX(-50%) translateY(100px);opacity:0}60%{transform:translateX(-50%) translateY(-8px);opacity:1}80%{transform:translateX(-50%) translateY(4px)}100%{transform:translateX(-50%) translateY(0)}}
 @keyframes creditColorCycle{0%,100%{background:#FF6B6B}25%{background:#C8FF3C}50%{background:#D8B4FE}75%{background:#FFE566}}
 @keyframes creditHeartbeat{0%,20%,100%{transform:scale(1)}5%{transform:scale(1.25)}15%{transform:scale(1.15)}}
+@keyframes heroCreditPulse{0%,100%{transform:scale(1);box-shadow:3px 3px 0px var(--border)}50%{transform:scale(1.03);box-shadow:4px 4px 0px var(--border)}}
 
 /* Utility Classes */
 .mobile-only{display:none!important}
@@ -221,16 +238,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   /* Compact Header */
   .header{padding:10px 16px;height:56px}
   .search-box{display:none!important}
+  .header-btn{display:none!important}
 
-  /* Floating Filter Button (bottom-right corner) */
-  .mobile-filter-fab{position:fixed!important;bottom:76px;right:16px;z-index:99;display:flex!important;flex-direction:column;align-items:flex-end}
-  .mobile-filter-btn{width:52px;height:52px;border-radius:14px;background:var(--sky);border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow);font-size:16px;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);-webkit-user-select:none;user-select:none}
-  .mobile-filter-btn:active{box-shadow:1px 1px 0px var(--border);transform:translate(2px,2px)}
-  .mobile-filter-btn.active{background:var(--lime)}
-  .mobile-filter-dropdown{position:absolute;bottom:calc(100% + 8px);right:0;background:var(--surface);border:2.5px solid var(--border);box-shadow:var(--shadow);z-index:150;min-width:180px;display:none;overflow:hidden;border-radius:12px}
-  .mobile-filter-dropdown.open{display:block;animation:filterUp 0.2s cubic-bezier(0.16,1,0.3,1)}
-  @keyframes filterUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .mobile-filter-dropdown .cam-option{padding:12px 16px;font-size:14px;min-height:44px}
+  /* Hide floating filter on mobile (bottom nav handles it) */
+  .mobile-filter-fab{display:none!important}
   .mobile-search-overlay{position:fixed;top:0;left:0;right:0;height:56px;background:var(--bg);z-index:150;border-bottom:2.5px solid var(--border);padding:8px 12px;display:none;align-items:center;gap:10px;transform:translateY(-100%);transition:transform 0.25s cubic-bezier(0.4,0,0.2,1)}
   .mobile-search-overlay.open{display:flex!important;transform:translateY(0)}
   .mobile-search-overlay input{flex:1;height:40px;border:2.5px solid var(--border);border-radius:10px;padding:0 14px;font-family:inherit;font-size:14px;font-weight:600;background:var(--surface);box-shadow:var(--shadow-sm);outline:none}
@@ -238,11 +249,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .mobile-search-back{width:40px;height:40px;border-radius:10px;background:var(--surface);border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:800;box-shadow:var(--shadow-sm);flex-shrink:0}
 
   /* Compact Hero */
-  .hero{padding:20px 16px 8px}
+  .hero{padding:60px 24px 40px}
   .hero h1{font-size:28px;letter-spacing:-1.5px}
-  .hero .tagline{font-size:13px;margin-bottom:2px}
-  .hero-eyebrow{font-size:9px;padding:4px 12px;margin-bottom:12px}
-  .hero .stats-row{gap:8px;margin-top:10px}
+  .hero .tagline{display:none!important}
+  .hero h1{font-size:28px;letter-spacing:-1.5px;margin-bottom:8px}
+  .hero-eyebrow{font-size:9px;padding:4px 12px;margin-bottom:20px}
+  .hero .stats-row{gap:8px;margin-top:20px}
+  .hero-credit{display:inline-flex!important;align-items:center;gap:5px;margin-top:24px;font-size:11px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:0.3px;padding:8px 16px;border:2px solid var(--border);border-radius:0;box-shadow:3px 3px 0px var(--border);background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);animation:heroCreditPulse 3s ease-in-out infinite}
+  .hero-credit .ig-icon{flex-shrink:0}
+  .hero-credit .follow-nudge{opacity:0.85;font-weight:600}
   .stat{padding:8px 14px;border-radius:10px}
   .stat-num{font-size:18px}
   .stat-label{font-size:9px}
@@ -251,7 +266,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .stories{display:none!important}
 
   /* Simplified Section Header */
-  .section-header{padding:14px 16px 4px!important;flex-wrap:nowrap;gap:8px}
+  .section-header{padding:4px 16px 4px!important;flex-wrap:nowrap;gap:8px;margin-top:-8px}
   .section-title{font-size:16px}
   .cam-filter{display:none!important}
   .select-toggle{display:none!important}
@@ -264,8 +279,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .photo-tile{box-shadow:2px 2px 0px var(--border);border-width:2px;border-radius:12px}
   .tile-overlay{opacity:0!important;pointer-events:none}
   .tile-check{top:6px;left:6px;width:24px;height:24px;border-radius:6px;font-size:12px;opacity:1!important}
-  .grid-range{padding:2px 0}
-  .grid-range span{font-size:10px}
+  .range-pill{top:62px;font-size:10px;padding:3px 12px;border-width:2px}
 
   /* Hide FAB on mobile — selection is always available */
   .fab{display:none!important}
@@ -282,7 +296,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
   /* Download bar repositioned above bottom nav */
   .download-bar{bottom:64px!important;padding:10px 12px;flex-wrap:wrap;gap:8px;border-radius:16px 16px 0 0;background:var(--lime);border:2.5px solid var(--border);border-bottom:none}
-  .download-bar.visible~.mobile-filter-fab{bottom:140px}
   .dl-bar-left{width:100%;justify-content:space-between}
   .dl-bar-right{width:100%;gap:8px}
   .dl-btn{flex:1;text-align:center;padding:10px 0;font-size:12px;justify-content:center}
@@ -309,7 +322,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .credit{display:none!important}
 
   /* Scroll-to-top repositioned */
-  .scroll-top{bottom:80px;right:auto;left:16px;width:40px;height:40px;border-radius:10px;font-size:16px}
+  .scroll-top{bottom:136px;right:16px;left:auto;width:40px;height:40px;border-radius:10px;font-size:16px}
+
+  /* Range nav FAB on mobile */
+  .range-nav-fab{bottom:80px;right:16px;width:42px;height:42px;border-radius:10px}
+  .range-nav-panel{bottom:132px;right:16px;width:200px;max-height:50vh}
 }
 @media(max-width:480px){
   .photo-grid{grid-auto-rows:140px!important;gap:6px!important}
@@ -358,10 +375,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <div class="stat"><span class="stat-num">4</span><span class="stat-label">Cameras</span></div>
     <div class="stat"><span class="stat-num">1</span><span class="stat-label">Epic Day</span></div>
   </div>
+  <a class="hero-credit mobile-only" href="https://instagram.com/itsgathinlife" target="_blank" rel="noopener"><svg class="ig-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg> Built by <span style="font-weight:800">@itsgathinlife</span></a>
 </section>
-
-<!-- Story Bubbles -->
-<div class="stories" id="stories"></div>
 
 <!-- Section Header -->
 <div class="section-header">
@@ -382,6 +397,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 </div>
 
+<!-- Sticky Range Pill -->
+<div class="range-pill" id="rangePill"></div>
+
 <!-- Bento Photo Grid -->
 <div class="photo-grid" id="photoGrid"></div>
 
@@ -397,18 +415,27 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 </div>
 
+<!-- Range Navigator -->
+<button class="range-nav-fab" id="rangeNavFab" title="Jump to range">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+</button>
+<div class="range-nav-panel" id="rangeNavPanel">
+  <div class="rn-title">Jump to range</div>
+  <div class="rn-list" id="rangeNavList"></div>
+</div>
+
 <!-- Scroll to Top -->
 <button class="scroll-top" id="scrollTopBtn">&#8593;</button>
 
 <!-- Mobile Bottom Nav -->
 <nav class="bottom-nav mobile-only" id="bottomNav">
-  <button class="bottom-nav-tab active" data-category="all"><span class="tab-icon">&#128248;</span><span class="tab-label">All</span></button>
-  <button class="bottom-nav-tab" data-category="cam1"><span class="tab-icon">&#127891;</span><span class="tab-label">Stage</span></button>
+  <button class="bottom-nav-tab active" data-category="all"><span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span><span class="tab-label">All</span></button>
+  <button class="bottom-nav-tab" data-category="cam1"><span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span><span class="tab-label">Cam 1</span></button>
   <button class="bottom-nav-search" id="bottomNavSearch" title="Search">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
   </button>
-  <button class="bottom-nav-tab" data-category="cam3"><span class="tab-icon">&#129523;</span><span class="tab-label">Portraits</span></button>
-  <button class="bottom-nav-tab" data-category="drone"><span class="tab-icon">&#128641;</span><span class="tab-label">Aerial</span></button>
+  <button class="bottom-nav-tab" data-category="cam2"><span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span><span class="tab-label">Cam 2</span></button>
+  <button class="bottom-nav-tab" data-category="cam3"><span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span><span class="tab-label">Cam 3</span></button>
 </nav>
 
 <!-- Mobile Floating Filter Button (bottom-right) -->
@@ -418,10 +445,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </button>
   <div class="mobile-filter-dropdown" id="mobileFilterDropdown">
     <button class="cam-option active" data-cam="all">All Cameras</button>
-    <button class="cam-option" data-cam="cam1">Camera 1 &middot; Stage</button>
-    <button class="cam-option" data-cam="cam2">Camera 2 &middot; Candids</button>
-    <button class="cam-option" data-cam="cam3">Camera 3 &middot; Portraits</button>
-    <button class="cam-option" data-cam="drone">Drone &middot; Aerial</button>
+    <button class="cam-option" data-cam="cam1">Camera 1</button>
+    <button class="cam-option" data-cam="cam2">Camera 2</button>
+    <button class="cam-option" data-cam="cam3">Camera 3</button>
+    <button class="cam-option" data-cam="drone">Drone</button>
   </div>
 </div>
 
@@ -6408,10 +6435,10 @@ const DRONE_FILES = [
 const BASE = 'https://www.annauniv.edu/Graduation_Day_Photos_2026_CEG/';
 
 const FOLDERS = [
-    { id: 'cam1', name: 'Stage', icon: '\u{1F393}', path: '05th%20Feb%202026%20-%20Camera%20-%2001/', files: CAM1_FILES },
-    { id: 'cam2', name: 'Candids', icon: '\u{1F604}', path: '05th%20Feb%202026%20-%20Camera%20-%2002/', files: CAM2_FILES },
-    { id: 'cam3', name: 'Portraits', icon: '\u{1F933}', path: '05th%20Feb%202026%20-%20Camera%20-%2003/', files: CAM3_FILES },
-    { id: 'drone', name: 'Aerial', icon: '\u{1F681}', path: 'Drone%20Photos/', files: DRONE_FILES },
+    { id: 'cam1', name: 'Camera 1', path: '05th%20Feb%202026%20-%20Camera%20-%2001/', files: CAM1_FILES },
+    { id: 'cam2', name: 'Camera 2', path: '05th%20Feb%202026%20-%20Camera%20-%2002/', files: CAM2_FILES },
+    { id: 'cam3', name: 'Camera 3', path: '05th%20Feb%202026%20-%20Camera%20-%2003/', files: CAM3_FILES },
+    { id: 'drone', name: 'Drone', path: 'Drone%20Photos/', files: DRONE_FILES },
 ];
 
 // Build flat photo list
@@ -6423,7 +6450,6 @@ FOLDERS.forEach(folder => {
             filename,
             category: folder.id,
             label: folder.name,
-            icon: folder.icon,
             folderPath: folder.path
         });
     });
@@ -6471,21 +6497,12 @@ const sectionTitle = document.getElementById('sectionTitle');
 const photoCountEl = document.getElementById('photoCount');
 const scrollTopBtn = document.getElementById('scrollTopBtn');
 const searchInput = document.getElementById('searchInput');
-const storiesEl = document.getElementById('stories');
-
 // ============================================================
 // INIT
 // ============================================================
 function init() {
     // Total count animation
     animateCounter(document.getElementById('totalPhotos'), allPhotos.length);
-
-    // Build story bubbles
-    const allStory = makeStory('all', '\u{1F4F8}', 'All Photos', allPhotos.length, true);
-    storiesEl.appendChild(allStory);
-    FOLDERS.forEach(f => {
-        storiesEl.appendChild(makeStory(f.id, f.icon, f.name, f.files.length, false));
-    });
 
     // Search
     const searchClear = document.getElementById('searchClear');
@@ -6504,18 +6521,6 @@ function init() {
 
     // Render initial
     applyFilter();
-}
-
-function makeStory(category, icon, label, count, active) {
-    const div = document.createElement('div');
-    div.className = 'story' + (active ? ' active' : '');
-    div.dataset.category = category;
-    div.innerHTML = `
-        <div class="story-ring${active ? ' active' : ''}"><div class="story-inner"><span class="story-icon">${icon}</span></div></div>
-        <span class="story-label">${label}</span>
-        <span class="story-count">${count.toLocaleString()}</span>
-    `;
-    return div;
 }
 
 // ============================================================
@@ -6546,8 +6551,8 @@ function getFileRange(filename) {
     const m = filename.match(/(\d{4,})/);
     if (!m) return null;
     const num = parseInt(m[1], 10);
-    const base = Math.floor(num / 1000) * 1000;
-    return base + ' – ' + (base + 999);
+    const base = Math.floor(num / 100) * 100;
+    return base + ' – ' + (base + 99);
 }
 
 let lastRange = '';
@@ -6678,19 +6683,6 @@ downloadSelBtn.addEventListener('click', () => {
 // EVENTS
 // ============================================================
 
-// Story clicks
-storiesEl.addEventListener('click', (e) => {
-    const story = e.target.closest('.story');
-    if (!story) return;
-    document.querySelectorAll('.story').forEach(s => { s.classList.remove('active'); s.querySelector('.story-ring').classList.remove('active'); });
-    story.classList.add('active');
-    story.querySelector('.story-ring').classList.add('active');
-    currentCategory = story.dataset.category;
-    syncCamFilter();
-    applyFilter();
-    window.scrollTo({ top: grid.offsetTop - 80, behavior: 'smooth' });
-});
-
 // Camera filter dropdown
 const camFilter = document.getElementById('camFilter');
 const camFilterBtn = document.getElementById('camFilterBtn');
@@ -6705,12 +6697,6 @@ document.getElementById('camDropdown').addEventListener('click', (e) => {
     e.stopPropagation();
     const cam = opt.dataset.cam;
     currentCategory = cam;
-    // Sync story bubbles
-    document.querySelectorAll('.story').forEach(s => {
-        const match = s.dataset.category === cam;
-        s.classList.toggle('active', match);
-        s.querySelector('.story-ring').classList.toggle('active', match);
-    });
     syncCamFilter();
     camFilter.classList.remove('open');
     applyFilter();
@@ -6718,7 +6704,7 @@ document.getElementById('camDropdown').addEventListener('click', (e) => {
 
 function syncCamFilter() {
     const labels = { all: 'All Cameras', cam1: 'Cam 1', cam2: 'Cam 2', cam3: 'Cam 3', drone: 'Drone' };
-    camFilterBtn.innerHTML = (labels[currentCategory] || 'Camera') + ' <span class="arrow">&#9660;</span>';
+    camFilterBtn.innerHTML = (labels[currentCategory] || 'All Cameras') + ' <span class="arrow">&#9660;</span>';
     document.querySelectorAll('.cam-option').forEach(o => o.classList.toggle('active', o.dataset.cam === currentCategory));
 }
 
@@ -7123,12 +7109,6 @@ function animateCounter(el, target) {
             tab.classList.add('active');
             // Sync with existing system
             currentCategory = cat;
-            // Sync story bubbles (for if user resizes to desktop)
-            document.querySelectorAll('.story').forEach(s => {
-                const match = s.dataset.category === cat;
-                s.classList.toggle('active', match);
-                s.querySelector('.story-ring').classList.toggle('active', match);
-            });
             syncCamFilter();
             applyFilter();
             window.scrollTo({ top: grid.offsetTop - 60, behavior: 'smooth' });
@@ -7184,12 +7164,6 @@ function animateCounter(el, target) {
             e.stopPropagation();
             const cam = opt.dataset.cam;
             currentCategory = cam;
-            // Sync all UIs
-            document.querySelectorAll('.story').forEach(s => {
-                const match = s.dataset.category === cam;
-                s.classList.toggle('active', match);
-                s.querySelector('.story-ring').classList.toggle('active', match);
-            });
             syncCamFilter();
             mobileFilterDropdown.classList.remove('open');
             // Update active state in mobile filter dropdown
@@ -7339,6 +7313,147 @@ function animateCounter(el, target) {
             }
         }
     };
+})();
+
+// --- Sticky Range Pill ---
+(function() {
+    const pill = document.getElementById('rangePill');
+    const grid = document.getElementById('photoGrid');
+    if (!pill || !grid) return;
+
+    let pillTimer = null;
+    let lastRange = '';
+
+    function updateRangePill() {
+        const gridRect = grid.getBoundingClientRect();
+        // Only show pill when grid is in view
+        if (gridRect.bottom < 0 || gridRect.top > window.innerHeight) {
+            pill.classList.remove('visible');
+            return;
+        }
+
+        // Find the first visible photo tile
+        const tiles = grid.querySelectorAll('.photo-tile');
+        let visibleRange = null;
+        for (let i = 0; i < tiles.length; i++) {
+            const r = tiles[i].getBoundingClientRect();
+            if (r.bottom > 60 && r.top < window.innerHeight * 0.4) {
+                const idx = parseInt(tiles[i].dataset.index, 10);
+                if (!isNaN(idx) && filteredPhotos[idx]) {
+                    visibleRange = getFileRange(filteredPhotos[idx].filename);
+                    if (visibleRange) break;
+                }
+            }
+        }
+
+        if (visibleRange && visibleRange !== lastRange) {
+            lastRange = visibleRange;
+            pill.textContent = visibleRange;
+            pill.classList.add('visible');
+            clearTimeout(pillTimer);
+            pillTimer = setTimeout(() => pill.classList.remove('visible'), 1800);
+        } else if (visibleRange && visibleRange === lastRange) {
+            // Same range — keep visible briefly during scroll
+            pill.classList.add('visible');
+            clearTimeout(pillTimer);
+            pillTimer = setTimeout(() => pill.classList.remove('visible'), 1800);
+        }
+    }
+
+    let scrollTicking = false;
+    window.addEventListener('scroll', () => {
+        if (!scrollTicking) {
+            scrollTicking = true;
+            requestAnimationFrame(() => {
+                updateRangePill();
+                scrollTicking = false;
+            });
+        }
+    }, { passive: true });
+})();
+
+// --- Range Navigator FAB ---
+(function() {
+    const fab = document.getElementById('rangeNavFab');
+    const panel = document.getElementById('rangeNavPanel');
+    const list = document.getElementById('rangeNavList');
+    if (!fab || !panel || !list) return;
+
+    fab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = panel.classList.toggle('open');
+        fab.classList.toggle('active', isOpen);
+        if (isOpen) buildRangeList();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target) && e.target !== fab) {
+            panel.classList.remove('open');
+            fab.classList.remove('active');
+        }
+    });
+
+    function buildRangeList() {
+        // Build range → count map and first index for each range
+        const ranges = [];
+        const seen = {};
+        for (let i = 0; i < filteredPhotos.length; i++) {
+            const r = getFileRange(filteredPhotos[i].filename);
+            if (r && !seen[r]) {
+                seen[r] = { range: r, count: 0, firstIndex: i };
+                ranges.push(seen[r]);
+            }
+            if (r && seen[r]) seen[r].count++;
+        }
+
+        // Find current visible range
+        const grid = document.getElementById('photoGrid');
+        const tiles = grid.querySelectorAll('.photo-tile');
+        let currentRange = null;
+        for (let i = 0; i < tiles.length; i++) {
+            const rect = tiles[i].getBoundingClientRect();
+            if (rect.bottom > 60 && rect.top < window.innerHeight * 0.5) {
+                const idx = parseInt(tiles[i].dataset.index, 10);
+                if (!isNaN(idx) && filteredPhotos[idx]) {
+                    currentRange = getFileRange(filteredPhotos[idx].filename);
+                    if (currentRange) break;
+                }
+            }
+        }
+
+        list.innerHTML = ranges.map(r =>
+            '<button class="rn-item' + (r.range === currentRange ? ' current' : '') + '" data-first="' + r.firstIndex + '">' +
+            '<span>' + r.range + '</span>' +
+            '<span class="rn-count">' + r.count + '</span>' +
+            '</button>'
+        ).join('');
+
+        // Scroll the current item into view in the panel
+        const cur = list.querySelector('.current');
+        if (cur) cur.scrollIntoView({ block: 'center' });
+    }
+
+    list.addEventListener('click', (e) => {
+        const item = e.target.closest('.rn-item');
+        if (!item) return;
+        const firstIdx = parseInt(item.dataset.first, 10);
+        // Find the tile with this index and scroll to it
+        const grid = document.getElementById('photoGrid');
+        const tile = grid.querySelector('.photo-tile[data-index="' + firstIdx + '"]');
+        if (tile) {
+            tile.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Offset for sticky header
+            setTimeout(() => window.scrollBy(0, -80), 400);
+        } else {
+            // Tile might not be rendered yet — load more batches
+            // Scroll to approximate position
+            const totalHeight = grid.scrollHeight;
+            const ratio = firstIdx / filteredPhotos.length;
+            window.scrollTo({ top: grid.offsetTop + totalHeight * ratio, behavior: 'smooth' });
+        }
+        panel.classList.remove('open');
+        fab.classList.remove('active');
+    });
 })();
 
 init();
