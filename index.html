@@ -240,6 +240,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 /* Utility Classes */
 .mobile-only{display:none!important}
+.desktop-only{display:block}
+
+/* Hide range FAB on desktop (inline button replaces it) */
+@media(min-width:769px){
+  .range-nav-fab{display:none!important}
+  .range-nav-panel{display:none!important}
+}
 
 /* Responsive */
 @media(max-width:1024px){
@@ -418,6 +425,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
         <button class="cam-option" data-cam="cam3">Camera 3</button>
         <button class="cam-option" data-cam="drone">Drone</button>
       </div>
+    </div>
+    <div class="cam-filter desktop-only" id="rangeFilter">
+      <button class="cam-filter-btn" id="rangeFilterBtn" style="background:var(--lavender)">Range Filter <span class="arrow">&#9660;</span></button>
+      <div class="cam-dropdown" id="rangeDropdown" style="max-height:50vh;overflow-y:auto"></div>
     </div>
     <button class="select-toggle" id="selectToggle">Select</button>
   </div>
@@ -7599,6 +7610,78 @@ function animateCounter(el, target) {
         }
         panel.classList.remove('open');
         fab.classList.remove('active');
+    });
+})();
+
+// --- Desktop Range Filter (inline in section header) ---
+(function() {
+    const rangeFilter = document.getElementById('rangeFilter');
+    const rangeBtn = document.getElementById('rangeFilterBtn');
+    const rangeDropdown = document.getElementById('rangeDropdown');
+    if (!rangeFilter || !rangeBtn || !rangeDropdown) return;
+
+    rangeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = rangeFilter.classList.toggle('open');
+        if (isOpen) buildDesktopRangeList();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!rangeFilter.contains(e.target)) {
+            rangeFilter.classList.remove('open');
+        }
+    });
+
+    function buildDesktopRangeList() {
+        const ranges = [];
+        const seen = {};
+        for (let i = 0; i < filteredPhotos.length; i++) {
+            const r = getFileRange(filteredPhotos[i].filename);
+            if (r && !seen[r]) {
+                seen[r] = { range: r, count: 0, firstIndex: i };
+                ranges.push(seen[r]);
+            }
+            if (r && seen[r]) seen[r].count++;
+        }
+
+        const grid = document.getElementById('photoGrid');
+        const tiles = grid.querySelectorAll('.photo-tile');
+        let currentRange = null;
+        for (let i = 0; i < tiles.length; i++) {
+            const rect = tiles[i].getBoundingClientRect();
+            if (rect.bottom > 60 && rect.top < window.innerHeight * 0.5) {
+                const idx = parseInt(tiles[i].dataset.index, 10);
+                if (!isNaN(idx) && filteredPhotos[idx]) {
+                    currentRange = getFileRange(filteredPhotos[idx].filename);
+                    if (currentRange) break;
+                }
+            }
+        }
+
+        rangeDropdown.innerHTML = ranges.map(r =>
+            '<button class="cam-option' + (r.range === currentRange ? ' active' : '') + '" data-first="' + r.firstIndex + '">' +
+            r.range + ' <span style="opacity:0.5;font-weight:500">(' + r.count + ')</span></button>'
+        ).join('');
+
+        const cur = rangeDropdown.querySelector('.active');
+        if (cur) cur.scrollIntoView({ block: 'center' });
+    }
+
+    rangeDropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.cam-option');
+        if (!item) return;
+        const firstIdx = parseInt(item.dataset.first, 10);
+        const grid = document.getElementById('photoGrid');
+        const tile = grid.querySelector('.photo-tile[data-index="' + firstIdx + '"]');
+        if (tile) {
+            tile.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => window.scrollBy(0, -80), 400);
+        } else {
+            const totalHeight = grid.scrollHeight;
+            const ratio = firstIdx / filteredPhotos.length;
+            window.scrollTo({ top: grid.offsetTop + totalHeight * ratio, behavior: 'smooth' });
+        }
+        rangeFilter.classList.remove('open');
     });
 })();
 
